@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Amara Gold — The Seal Breaks Once</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,600;9..144,700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="preload" as="image" href="pot-sealed.webp">
+<link rel="preload" as="image" href="pot-explosion.webp">
+<link rel="preload" as="image" href="plate-hero.webp">
+<style>
+  :root{
+    --bg:#0a0605;
+    --bg-soft:#120b08;
+    --ember:#c4501c;
+    --ember-bright:#ff7a3d;
+    --gold:#e8b54d;
+    --gold-bright:#f5d488;
+    --cream:#f3e9d8;
+    --clay:#7a4b33;
+    --muted:#9c8d78;
+  }
+
+  *{ margin:0; padding:0; box-sizing:border-box; }
+
+  html{ background:var(--bg); }
+
+  body{
+    background:var(--bg);
+    color:var(--cream);
+    font-family:'Manrope', sans-serif;
+    overflow-x:hidden;
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    *{ animation-duration:0.01ms !important; animation-iteration-count:1 !important; transition-duration:0.01ms !important; }
+  }
+
+  /* ---------- top bar ---------- */
+  .topbar{
+    position:fixed;
+    top:0; left:0; right:0;
+    z-index:50;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:28px 5vw;
+    mix-blend-mode:difference;
+  }
+  .wordmark{
+    font-family:'Fraunces', serif;
+    font-size:1.05rem;
+    font-weight:600;
+    letter-spacing:0.02em;
+    color:var(--cream);
+  }
+  .wordmark span{ color:var(--gold-bright); font-style:italic; }
+  .topbar a{
+    color:var(--cream);
+    text-decoration:none;
+    font-size:0.78rem;
+    font-weight:600;
+    letter-spacing:0.12em;
+    text-transform:uppercase;
+    border-bottom:1px solid rgba(243,233,216,0.35);
+    padding-bottom:4px;
+  }
+
+  /* ---------- grain + vignette ---------- */
+  .grain{
+    position:fixed; inset:0;
+    pointer-events:none;
+    z-index:40;
+    opacity:0.05;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+  .vignette{
+    position:fixed; inset:0;
+    pointer-events:none;
+    z-index:41;
+    background:radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,0.55) 100%);
+  }
+
+  /* ---------- hero scroll rig ---------- */
+  .rig{
+    position:relative;
+    height:400vh;
+  }
+  .stage{
+    position:sticky;
+    top:0;
+    height:100vh;
+    width:100%;
+    overflow:hidden;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+
+  .stage-bg{
+    position:absolute; inset:0;
+    background:
+      radial-gradient(ellipse 60% 45% at 50% 38%, rgba(196,80,28,0.18), transparent 70%),
+      radial-gradient(ellipse 100% 60% at 50% 100%, rgba(122,75,51,0.25), transparent 60%),
+      var(--bg);
+  }
+
+  .visual{
+    position:relative;
+    width:min(56vw, 620px);
+    aspect-ratio:1408/768;
+    z-index:2;
+  }
+  .visual img{
+    position:absolute; inset:0;
+    width:100%; height:100%;
+    object-fit:contain;
+    filter:drop-shadow(0 30px 60px rgba(0,0,0,0.6));
+    will-change:opacity, transform;
+    backface-visibility:hidden;
+  }
+  #img-sealed{ opacity:1; }
+  #img-explosion{ opacity:0; }
+  #img-plate{ opacity:0; }
+
+  /* ember particles */
+  .embers{
+    position:absolute; inset:0;
+    z-index:3;
+    pointer-events:none;
+    opacity:0;
+  }
+  .ember{
+    position:absolute;
+    bottom:35%;
+    width:4px; height:4px;
+    border-radius:50%;
+    background:var(--gold-bright);
+    box-shadow:0 0 8px 2px var(--ember-bright);
+  }
+
+  .flash{
+    position:absolute; inset:0;
+    z-index:4;
+    background:radial-gradient(circle at 50% 42%, rgba(255,244,220,1), rgba(255,180,90,0.7) 30%, transparent 60%);
+    opacity:0;
+    pointer-events:none;
+  }
+
+  .glow{
+    position:absolute; inset:0;
+    z-index:1;
+    background:radial-gradient(ellipse 55% 40% at 50% 42%, rgba(255,140,60,0.55), transparent 70%);
+    opacity:0;
+    pointer-events:none;
+    filter:blur(4px);
+  }
+
+  .shockwave{
+    position:absolute;
+    left:50%; top:42%;
+    width:10px; height:10px;
+    border-radius:50%;
+    border:2px solid rgba(255,200,130,0.8);
+    transform:translate(-50%,-50%);
+    z-index:3;
+    opacity:0;
+    pointer-events:none;
+  }
+
+  /* ---------- copy blocks ---------- */
+  .copy{
+    position:absolute;
+    left:50%;
+    transform:translateX(-50%);
+    z-index:5;
+    text-align:center;
+    width:min(90vw, 720px);
+  }
+  .copy-1{ bottom:9%; }
+  .copy-2{ bottom:9%; opacity:0; }
+  .copy-3{ bottom:8%; opacity:0; }
+
+  .eyebrow{
+    font-size:0.72rem;
+    font-weight:700;
+    letter-spacing:0.28em;
+    text-transform:uppercase;
+    color:var(--gold);
+    margin-bottom:18px;
+  }
+  .eyebrow::before, .eyebrow::after{
+    content:"—";
+    color:var(--clay);
+    margin:0 10px;
+  }
+
+  h1{
+    font-family:'Fraunces', serif;
+    font-weight:600;
+    font-size:clamp(2.1rem, 5vw, 4rem);
+    line-height:1.04;
+    letter-spacing:-0.01em;
+    color:var(--cream);
+  }
+  h1 em{
+    font-style:italic;
+    font-weight:400;
+    color:var(--gold-bright);
+  }
+
+  .sub{
+    margin-top:20px;
+    font-size:1rem;
+    color:var(--muted);
+    font-weight:500;
+    max-width:480px;
+    margin-left:auto;
+    margin-right:auto;
+    line-height:1.6;
+  }
+
+  .cta-row{
+    margin-top:32px;
+    display:flex;
+    gap:16px;
+    justify-content:center;
+  }
+  .btn{
+    display:inline-block;
+    padding:15px 34px;
+    border-radius:2px;
+    font-size:0.78rem;
+    font-weight:700;
+    letter-spacing:0.1em;
+    text-transform:uppercase;
+    text-decoration:none;
+    transition:transform 0.25s ease;
+  }
+  .btn:hover{ transform:translateY(-2px); }
+  .btn-solid{
+    background:linear-gradient(135deg, var(--gold-bright), var(--ember));
+    color:#160c07;
+  }
+  .btn-ghost{
+    border:1px solid rgba(243,233,216,0.3);
+    color:var(--cream);
+  }
+
+  .scroll-hint{
+    position:absolute;
+    bottom:34px; left:50%;
+    transform:translateX(-50%);
+    z-index:5;
+    font-size:0.65rem;
+    letter-spacing:0.2em;
+    text-transform:uppercase;
+    color:var(--muted);
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:8px;
+  }
+  .scroll-hint .line{
+    width:1px; height:34px;
+    background:linear-gradient(var(--gold), transparent);
+    animation:pulse-line 1.8s ease-in-out infinite;
+  }
+  @keyframes pulse-line{
+    0%,100%{ opacity:0.3; }
+    50%{ opacity:1; }
+  }
+
+  /* ---------- next section placeholder ---------- */
+  .next{
+    background:var(--bg-soft);
+    padding:120px 5vw;
+    text-align:center;
+    color:var(--muted);
+    font-size:0.85rem;
+    letter-spacing:0.05em;
+  }
+</style>
+</head>
+<body>
+
+  <div class="grain"></div>
+  <div class="vignette"></div>
+
+  <header class="topbar">
+    <div class="wordmark">AMARA <span>Gold</span></div>
+    <a href="#menu">View Menu</a>
+  </header>
+
+  <section class="rig" id="rig">
+    <div class="stage">
+      <div class="stage-bg"></div>
+
+      <div class="visual">
+        <img id="img-sealed" src="pot-sealed.webp" alt="Sealed dum-cooked biryani handi">
+        <img id="img-explosion" src="pot-explosion.webp" alt="Biryani handi bursting open">
+        <img id="img-plate" src="plate-hero.webp" alt="Plated Amara Gold biryani with leg piece">
+        <div class="glow" id="glow"></div>
+        <div class="shockwave" id="shockwave"></div>
+        <div class="flash"></div>
+        <div class="embers" id="embers"></div>
+      </div>
+
+      <div class="copy copy-1" id="copy-1">
+        <p class="eyebrow">Slow&nbsp;Sealed · Dum Style</p>
+        <h1>Some seals<br><em>are worth</em> the wait.</h1>
+        <p class="sub">Hours of marinated spice, rice, and smoke — locked under dough, untouched, until now.</p>
+      </div>
+
+      <div class="copy copy-2" id="copy-2">
+        <h1 style="font-size:clamp(2.4rem, 6vw, 5rem); letter-spacing:0.01em;">AMARA <em>GOLD</em></h1>
+      </div>
+
+      <div class="copy copy-3" id="copy-3">
+        <p class="eyebrow">Every Order · Whole Leg Piece</p>
+        <h1>Plated the moment<br>it breaks.</h1>
+        <p class="sub">No pre-plated trays. No reheats. Your handi opens when you sit down.</p>
+        <div class="cta-row">
+          <a href="#reserve" class="btn btn-solid">Reserve a Table</a>
+          <a href="#menu" class="btn btn-ghost">See Full Menu</a>
+        </div>
+      </div>
+
+      <div class="scroll-hint" id="scroll-hint">
+        <span>Scroll</span>
+        <div class="line"></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="next">
+    Your page content continues below — the sticky rig above releases here.
+  </section>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+<script>
+  gsap.registerPlugin(ScrollTrigger);
+
+  // build ember particles once
+  const emberField = document.getElementById('embers');
+  const emberEls = [];
+  for(let i=0;i<26;i++){
+    const e = document.createElement('div');
+    e.className = 'ember';
+    const startX = 30 + Math.random()*40;
+    e.style.left = startX + '%';
+    e.style.width = e.style.height = (2 + Math.random()*4) + 'px';
+    emberField.appendChild(e);
+    emberEls.push({el:e, dx:(Math.random()-0.5)*220, dy:-(200+Math.random()*220), delay:Math.random()*0.4, startX});
+  }
+
+  const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  const tl = gsap.timeline({
+    scrollTrigger:{
+      trigger:'#rig',
+      start:'top top',
+      end:'bottom bottom',
+      scrub:0.6,
+    }
+  });
+
+  if(reduced){
+    // simple crossfade, no particles/scale drama
+    tl.to('#copy-1', {opacity:0, duration:1})
+      .to('#img-sealed', {opacity:0, duration:1}, '<')
+      .to('#img-explosion', {opacity:1, duration:1}, '<')
+      .to('#copy-2', {opacity:1, duration:0.6}, '<')
+      .to('#copy-2', {opacity:0, duration:0.6})
+      .to('#img-explosion', {opacity:0, duration:1}, '<')
+      .to('#img-plate', {opacity:1, duration:1}, '<')
+      .to('#copy-3', {opacity:1, duration:1}, '<');
+  } else {
+    tl
+      // idle hold on sealed pot with gentle steam-era scale
+      .to('#img-sealed', {scale:1.04, duration:1}, 0)
+
+      // ---- fade out intro copy ----
+      .to('#copy-1', {opacity:0, y:-20, duration:0.6}, 0.55)
+      .to('#scroll-hint', {opacity:0, duration:0.3}, 0)
+
+      // ---- anticipation: tiny compression before the burst (real pressure build-up) ----
+      .to('#img-sealed', {scale:0.985, duration:0.12, ease:'power1.in'}, 0.62)
+
+      // ---- THE SNAP: instant burst, no filter animation (cheap + punchier) ----
+      .to('#img-sealed', {opacity:0, scale:0.9, duration:0.1, ease:'power4.in'}, 0.74)
+      .fromTo('.flash', {opacity:0}, {opacity:1, duration:0.05, ease:'power4.out'}, 0.74)
+      .to('.flash', {opacity:0, duration:0.45, ease:'power2.in'}, 0.79)
+      .fromTo('.glow', {opacity:0}, {opacity:1, duration:0.15}, 0.74)
+      .to('.glow', {opacity:0, duration:1.1, ease:'power2.out'}, 0.9)
+
+      // ---- shockwave ring ----
+      .fromTo('.shockwave',
+        {opacity:0.9, width:10, height:10},
+        {opacity:0, width:520, height:520, duration:0.55, ease:'power2.out'}, 0.74)
+
+      // ---- camera shake (quick jolts, decaying) ----
+      .to('.visual', {x:-10, y:6, duration:0.045, ease:'none'}, 0.74)
+      .to('.visual', {x:9, y:-5, duration:0.045, ease:'none'}, 0.785)
+      .to('.visual', {x:-6, y:4, duration:0.045, ease:'none'}, 0.83)
+      .to('.visual', {x:4, y:-2, duration:0.05, ease:'none'}, 0.875)
+      .to('.visual', {x:0, y:0, duration:0.08, ease:'power2.out'}, 0.925)
+
+      // ---- explosion image: hard pop with overshoot, not a slow fade ----
+      .fromTo('#img-explosion',
+        {opacity:0, scale:1.22},
+        {opacity:1, scale:1, duration:0.4, ease:'back.out(1.7)'}, 0.76)
+
+      // ---- ember burst: staggered, varied speed, gravity fall-back ----
+      .to('.embers', {opacity:1, duration:0.08}, 0.76)
+      .add(()=>{
+        emberEls.forEach(({el,dx,dy,delay})=>{
+          const life = 1.1 + Math.random()*0.9;
+          gsap.fromTo(el,
+            {x:0, y:0, opacity:1, scale:1},
+            {
+              x:dx, y:dy*0.55, opacity:1, scale:0.8,
+              duration:life*0.4, delay:delay*0.5, ease:'power3.out', overwrite:true,
+              onComplete(){
+                gsap.to(el, {y:'+=90', opacity:0, duration:life*0.6, ease:'power1.in'});
+              }
+            }
+          );
+        });
+      }, 0.76)
+
+      // ---- AMARA GOLD title flash ----
+      .to('#copy-2', {opacity:1, duration:0.25}, 0.92)
+      .to('#copy-2', {opacity:0, duration:0.4}, 1.3)
+
+      // ---- hold explosion briefly ----
+      .to({}, {duration:0.4}, 1.1)
+
+      // ---- transition to plate ----
+      .to('#img-explosion', {opacity:0, scale:0.96, duration:0.6}, 1.7)
+      .fromTo('#img-plate', {opacity:0, scale:1.06}, {opacity:1, scale:1, duration:0.7, ease:'power2.out'}, 1.75)
+      .to('.embers', {opacity:0, duration:0.4}, 1.7)
+
+      // ---- final copy ----
+      .to('#copy-3', {opacity:1, y:0, duration:0.6}, 2.0);
+
+    gsap.set('#copy-3', {y:20});
+  }
+</script>
+</body>
+</html>
